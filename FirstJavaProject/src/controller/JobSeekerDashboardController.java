@@ -3,9 +3,6 @@ package controller;
 import database.ApplicationsDAO;
 import database.JobDAO;
 import java.awt.event.*;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.Socket;
 import java.util.List;
 import java.util.Map;
 import javax.swing.*;
@@ -20,22 +17,19 @@ public class JobSeekerDashboardController {
     public JobSeekerDashboardController(User user, List<Job> jobs) {
         this.user = user;
 
-        // Load jobs asynchronously (Thread)
+        // Load jobs asynchronously
         new Thread(() -> {
             try {
-                // Simulate loading jobs
-                Thread.sleep(500);
+                Thread.sleep(500); // Simulated loading delay
 
-                // Update GUI
                 SwingUtilities.invokeLater(() -> {
                     view = new JobSeekerDashboardView(user.getName(), jobs);
                     addListeners();
                     view.setVisible(true);
                 });
 
-                // Start background threads
-                startNotificationListener();
-                startPeriodicJobRefresh(); // ⬅️ new thread added here
+                // Start background job refresh
+                startPeriodicJobRefresh();
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -49,18 +43,15 @@ public class JobSeekerDashboardController {
         setApplyButtonListeners(view.getApplyButtonsMap());
     }
 
-    // 🧠 THREAD: Periodically refresh job listings
+    // THREAD: Periodically refresh job listings
     private void startPeriodicJobRefresh() {
         new Thread(() -> {
             while (true) {
                 try {
-                    // Sleep for 10 seconds
-                    Thread.sleep(10000);
+                    Thread.sleep(10000); // Refresh every 10 seconds
 
-                    // Fetch latest jobs from DB
-                    List<Job> latestJobs = JobDAO.getAllJobs(); // ⬅️ Replace with your real DB fetch
+                    List<Job> latestJobs = JobDAO.getAllJobs(); // Fetch updated jobs
 
-                    // Update GUI safely
                     SwingUtilities.invokeLater(() -> {
                         view.setJobList(latestJobs);
                         setApplyButtonListeners(view.getApplyButtonsMap());
@@ -70,25 +61,6 @@ public class JobSeekerDashboardController {
                 } catch (Exception e) {
                     System.out.println("Error during periodic refresh: " + e.getMessage());
                 }
-            }
-        }).start();
-    }
-
-    // 📡 Network client example
-    private void startNotificationListener() {
-        new Thread(() -> {
-            try (Socket socket = new Socket("localhost", 12345);
-                 BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
-                System.out.println("Connected to notification server...");
-
-                String message;
-                while ((message = reader.readLine()) != null) {
-                    System.out.println("Notification: " + message);
-                    // Optionally update UI
-                }
-
-            } catch (Exception e) {
-                System.out.println("Notification listener stopped: " + e.getMessage());
             }
         }).start();
     }
